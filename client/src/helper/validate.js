@@ -14,6 +14,9 @@ function usernameVerify(err={},values){
     else if(values.username.includes(" ")){
         err.username=toast.error('Invalid Username...!')
     }
+    else if(values.username.length<3){
+        err.username = toast.error('Username is too small...!')
+    }
     return err;
 }
 
@@ -72,5 +75,12 @@ export async function registerValidate(values){
     const err=usernameVerify({},values)
     passwordVerify(err,values);
     emailValidate(err,values);
+    return err;
+}
+
+//validate profile
+
+export async function profileValidate(values){
+    const err=emailValidate({},values);
     return err;
 }
