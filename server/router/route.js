@@ -1,6 +1,6 @@
 
 import {Router} from 'express';
-import auth from "../middleware/auth.js"
+import auth, {localVar} from "../middleware/auth.js"
 const router=Router();
 
 import * as controller from '../controllers/controller.js'
@@ -11,7 +11,7 @@ router.route('/authenticate').post((req,res)=>res.end())
 router.route('/login').post(controller.login)
 
 router.route('/user/:username').get(controller.getUser)
-router.route('/generateOTP').get(controller.genOTP)
+router.route('/generateOTP').get(controller.verifyUser,localVar, controller.genOTP)
 router.route('/verifyOTP').get(controller.verifyOTP)
 router.route('/createResetSession').get(controller.createResetSession)
 

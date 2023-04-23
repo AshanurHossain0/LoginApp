@@ -25,3 +25,11 @@ export default async function auth(req,res,next){
         return response.status(500).send({error:error.message});
     }
 }
+
+export function localVar(req,res,next){
+    req.app.locals={
+        OTP:null,
+        resetSession:false
+    }
+    next();
+}

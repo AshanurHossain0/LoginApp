@@ -2,6 +2,7 @@ import Usermodel from "../model/Usermodel.js"
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
 import ENV from '../config.js'
+import otpGnrt from 'otp-generator'
 
 //middleware
 export async function verifyUser(req,res,next){
@@ -9,7 +10,7 @@ export async function verifyUser(req,res,next){
         const {username} = req.method=="GET"? req.query : req.body;
         //check user existance
         const existUser=await Usermodel.findOne({username});
-        if(!exist) return res.status(404).send({error:"User not found"});
+        if(!existUser) return res.status(404).send({error:"User not found"});
         next();
     }
     catch(error){
@@ -104,7 +105,8 @@ export async function updateUser(req,res){
 
 export async function genOTP(req,res){
     try{
-        
+        req.app.locals.OTP= otpGnrt.generate(6,{lowerCaseAlphabets:false,upperCaseAlphabets:false,specialChars:false})
+        return res.status(200).send({code:req.app.locals.OTP})
     }
     catch(error){
         return res.status(500).send({status:false,msg:error.message})
@@ -113,7 +115,13 @@ export async function genOTP(req,res){
 
 export async function verifyOTP(req,res){
     try{
-
+        const {code}=req.query;
+        if(parseInt(req.app.locals.OTP)===parseInt(code)){
+            req.app.locals.OTP=null;
+            req.app.locals.resetSession=true;
+            return res.status(200).send({msg:"Verified Successfully"});
+        }
+        return res.status(400).send({error:"Invalid OTP"})
     }
     catch(error){
         return res.status(500).send({status:false,msg:error.message})
@@ -122,7 +130,11 @@ export async function verifyOTP(req,res){
 
 export async function createResetSession(req,res){
     try{
-
+        if(req.app.locals.resetSession){
+            req.app.locals.resetSession=false;
+            return res.status(200).send({msg:"access granted"});
+        }
+        return res.status(440).send({msg:"Session expired"});
     }
     catch(err){
         return res.status(500).send({status:false,msg:err.message})
@@ -131,7 +143,13 @@ export async function createResetSession(req,res){
 
 export async function resetPassword(req,res){
     try{
-
+        const {username,password}=req.body;
+        const user=Usermodel.findOne({username});
+        if(!user) return res.status(404).send({msg:"Username not found"});
+        const hashedPass=bcrypt.hashSync(password,10);
+        Usermodel.findOneAndUpdate({username:username},{password:hashedPass})
+        return res.status(200).send({msg:"Updation successfull"})
+        
     }
     catch(err){
         return res.status(500).send({status:false,msg:err.message})
