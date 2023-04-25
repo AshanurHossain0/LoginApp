@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
 import avatar from '../assets/profile.png'
-import {Toaster} from 'react-hot-toast'
+import toast, {Toaster} from 'react-hot-toast'
 import {useFormik} from 'formik'
 import { profileValidate } from '../helper/validate'
 import convertToBase64 from '../helper/convert'
+import useFetch from '../hooks/hook.js'
+import { updateUser } from '../helper/helper.js'
+import {useNavigate} from 'react-router-dom'
 
 import styles from "../styles/Username.module.css"
 import pflStyle from "../styles/Profile.module.css"
@@ -11,21 +14,29 @@ import pflStyle from "../styles/Profile.module.css"
 export default function Profile() {
   const [file,setFile]=useState()
 
+  const [{ isLoading, apiData, serverError }] = useFetch();
+  const navigate = useNavigate()
   const formik=useFormik({
     initialValues:{
-      firstName:"",
-      lastName:"",
-      email:"",
-      mobile:"",
-      address:""
+      firstName : apiData?.firstName || '',
+      lastName: apiData?.lastName || '',
+      email: apiData?.email || '',
+      mobile: apiData?.mobile || '',
+      address : apiData?.address || ''
 
     },
+    enableReinitialize: true,
     validate:profileValidate,
     validateOnBlur:false,
     validateOnChange:false,
     onSubmit: async values=>{
-      values = await Object.assign(values,{profile:file || ""})
-      console.log(values);
+      values = await Object.assign(values, { profile : file || apiData?.profile || ''})
+      let updatePromise = updateUser(values);
+      toast.promise(updatePromise, {
+        loading: 'Updating...',
+        success : <b>Update Successfully...!</b>,
+        error: <b>Could not Update!</b>
+      });
     }
   })
 
@@ -33,6 +44,14 @@ export default function Profile() {
     const base64=await convertToBase64(e.target.files[0]);
     setFile(base64)
   }
+  //logout
+  function userLogout(){
+    localStorage.removeItem('token');
+    navigate('/')
+  }
+
+  if(isLoading) return <h1 className='text-2xl font-bold'>isLoading</h1>;
+  if(serverError) return <h1 className='text-xl text-red-500'>{serverError.message+"ok"}</h1>
   return (
     <div className="container mx-auto">
       
@@ -50,7 +69,7 @@ export default function Profile() {
           <form className="py-1" onSubmit={formik.handleSubmit}>
             <div className="profile flex flex-col items-center py-4">
               <label htmlFor="profile">
-                <img src={file || avatar} className={`${styles.profile_img} ${pflStyle.profile_img}`} alt='avatar' />
+                <img  src={apiData?.profile || file || avatar} className={`${styles.profile_img} ${pflStyle.profile_img}`} alt='avatar' />
               </label>
               <input onChange={onUpload} type="file" id="profile" name="profile"></input>
             </div>
@@ -58,7 +77,7 @@ export default function Profile() {
             <div className="textbox flex flex-col items-center gap-6">
               <div className="name flex w-3/4 gap-10">
                 <input {...formik.getFieldProps('firstName')} className={`${styles.textbox} ${pflStyle.textbox}`} type="text" placeholder='First Name' />
-                <input {...formik.getFieldProps('lastName')} className={`${styles.textbox} ${pflStyle.textbox}`} type="text" placeholder='First Name' />
+                <input {...formik.getFieldProps('lastName')} className={`${styles.textbox} ${pflStyle.textbox}`} type="text" placeholder='Last Name' />
               </div>
               <div className="name flex w-3/4 gap-10">
                 <input {...formik.getFieldProps('mobile')} className={`${styles.textbox} ${pflStyle.textbox}`} type="text" placeholder='Mobile Number' />
@@ -71,7 +90,7 @@ export default function Profile() {
             </div>
 
             <div className="text-center py-4">
-            <span className='text-gray-500'>Want to Logout? <button className='text-red-500'>Logout Now</button></span>
+            <span className='text-gray-500'>Want to Logout? <button onClick={userLogout} className='text-red-500'>Logout Now</button></span>
             </div>
           </form>
 

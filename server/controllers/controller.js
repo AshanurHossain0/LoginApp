@@ -24,7 +24,7 @@ export async function register(req,res){
         const {username, password, profile, email}=req.body;
 
         const existUsername = await Usermodel.findOne({username:username});
-        if(existUsername) return res.status(500).send({msg:"Username already exist"})
+        if(existUsername) return res.status(500).send({msg:"Username already exist ."})
 
         const existEmail = await Usermodel.findOne({email:email});
         if(existEmail) return res.status(500).send({msg:"Email is already exist"})
@@ -94,9 +94,14 @@ export async function getUser(req,res){
 export async function updateUser(req,res){
     try{
         const {userId}=req.user;
-        const updatedUserData=await Usermodel.findOneAndUpdate({_id:userId},req.body)
-        if(!updatedUserData) return res.status(404).send({error:"Id not found"});
-        return res.status(200).send({msg:"Updation Successfull"})
+        if(userId){
+            const updatedUserData=await Usermodel.findOneAndUpdate({_id:userId},req.body)
+            if(!updatedUserData) return res.status(404).send({error:"Id not found"});
+            return res.status(200).send({msg:"Updation Successfull"})
+        }
+        else{
+            return res.status(404).send({ error : "User Not Found...!"});
+        }
     }
     catch(error){
         return res.status(500).send({status:false,msg:error.message})
@@ -143,7 +148,9 @@ export async function createResetSession(req,res){
 
 export async function resetPassword(req,res){
     try{
+        if(!req.app.locals.resetSession) return res.status(440).send({msg:"Session expired"})
         const {username,password}=req.body;
+
         const user=Usermodel.findOne({username});
         if(!user) return res.status(404).send({msg:"Username not found"});
         const hashedPass=bcrypt.hashSync(password,10);
