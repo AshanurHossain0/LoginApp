@@ -51,7 +51,7 @@ export async function login({username,password}){
 export async function getUser({username}){
     try{
         const {data}=await axios.get(`/api/user/${username}`)
-        return data;
+        return {data};
     }
     catch(error){
         return {error: "Password doesn't match"}
@@ -72,18 +72,18 @@ export async function updateUser(userData){
 
 //generateOTP
 export async function generateOTP(username){
-    try{
-        const {data:{code},status}=await axios.get("/api/generateOTP",{params:{username}});
-        if(status==200){
-           const {data:{email}}= await getUser({username});
-           let body={username:username,userEmail:email,text:`OTP to recover password is ${code}`,subject:"Recover password"}
+    try {
+        const {data : { code }, status } = await axios.get('/api/generateOTP', { params : { username }});
 
-           await axios.post('/api/registerMail',body);
-           return Promise.resolve(code)
+        // send mail with the OTP
+        if(status === 200){
+            let { data:{email}} = await getUser({ username });
+            let text = `Your Password Recovery OTP is ${code}. Verify and recover your password.`;
+            await axios.post('/api/registerMail', { username, userEmail: email, text, subject : "Password Recovery OTP"})
         }
-    }
-    catch(error){
-        return Promise.reject({error})
+        return Promise.resolve(code);
+    } catch (error) {
+        return Promise.reject({ error });
     }
 }
 

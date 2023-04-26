@@ -17,7 +17,6 @@ export default function Reset() {
     validateOnBlur:false,
     validateOnChange:false,
     onSubmit: async values=>{
-      console.log(values);
     }
   })
 

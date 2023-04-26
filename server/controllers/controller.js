@@ -154,7 +154,8 @@ export async function resetPassword(req,res){
         const user=Usermodel.findOne({username});
         if(!user) return res.status(404).send({msg:"Username not found"});
         const hashedPass=bcrypt.hashSync(password,10);
-        Usermodel.findOneAndUpdate({username:username},{password:hashedPass})
+        Usermodel.findOneAndUpdate({username:username},{password:hashedPass});
+        req.app.locals.resetSession=false;
         return res.status(200).send({msg:"Updation successfull"})
         
     }
