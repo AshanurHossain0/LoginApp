@@ -36,7 +36,6 @@ export default function Password() {
       })
     }
   })
-  console.log(apiData);
   if(isLoading) return <h1 className='text-2xl font-bold'>Loading...</h1>
   if(serverError) return <h1 className='text-xl text-red-500'>{serverError.message}</h1>
 
